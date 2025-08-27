@@ -1,0 +1,6 @@
+express
+https
+@twurple/auth
+fs
+dotenv
+selfsigned
