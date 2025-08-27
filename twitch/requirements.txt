@@ -1,0 +1,6 @@
+@twurple/api
+@twurple/auth
+@twurple/eventsub-ws
+fs
+axios
+dotenv
