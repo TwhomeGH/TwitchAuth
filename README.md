@@ -57,3 +57,34 @@ TwitchAuth以及關於MCBE TNTCoin Twitch擴展補丁
      ```bash
      /connect `YOUR_IP`:`YOUR_PORT`
      ```
+
+
+### TikTok 連線提示
+
+如果你在使用 TwitchAuth 擴展或 BedrockLive 連接 TikTok 時老是連不上：
+
+- 很有可能是你沒有設定 **簽名生成服務器 API**。
+- 請到 [EulerStream](https://www.eulerstream.com/) 生成一個 API。
+- 然後在 `.env` 中設定：
+  ```env
+  SIGN_API=你的_API_KEY
+
+- 你可能需要自行在以下檔案加入API配置：`BedrockLive/connections/tiktok-connection.js`
+- 示例程式碼片段（可作為參考）：
+
+	```javascript
+	import { WebcastPushConnection, signatureProvider } from "tiktok-live-connector";
+	import { config } from 'dotenv';
+	config();
+	
+	let sign_api = process.env.SIGN_API;
+	
+	if (!sign_api || sign_api === "YOUR_API_KEY") {
+	    console.warn(
+	        "⚠️ 你老是連不上 TikTok 直播，可能是沒有設定簽名生成服務器 API。" +
+	        "\n請到 https://www.eulerstream.com/ 生成一個 API 並填入 .env 的 SIGN_API 中。"
+	    );
+	} else {
+	    signatureProvider.config.extraParams.apiKey = sign_api;
+	}
+	```
