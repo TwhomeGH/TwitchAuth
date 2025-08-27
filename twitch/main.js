@@ -12,6 +12,22 @@ config(); // 讀取 .env
 //console.log(config().parsed)
 const Bark=process.env.BARK_API
 
+// --- 封裝通知 function ---
+async function sendBarkNotification(comment) {
+    // 判斷 Bark 是否可用
+    if (!Bark || Bark.toLowerCase() === "none") {
+        console.log("Bark 未設定，略過推送");
+        return;
+    }
+    try {
+        const encoded = encodeURI(comment);
+        const res = await axios.get(encoded);
+        console.log("Bark 推送成功", res.status);
+    } catch (err) {
+        console.error("Bark 錯誤:", err.message);
+    }
+}
+
 export async function plugin(twitchLiveMcbe) {
     const { minecraft } = twitchLiveMcbe;
     
@@ -58,9 +74,13 @@ export async function plugin(twitchLiveMcbe) {
             nickname: event.userDisplayName,
             rewardCost: event.bits,
             type:"Bits",
-            comment: `送出${event.bits} 小奇點`
+            comment: `送出 ${event.bits} 小奇點`
         });
-        console.log("Cheer",JSON.parse(message))
+        const JMes=JSON.parse(message)
+        console.log("Cheer",JMes)
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //console.log(encodeURI(GURL))
+        sendBarkNotification(GURL)
         minecraft.sendScriptEvent('tntcoin:reward', message);
     });
 
@@ -72,7 +92,12 @@ export async function plugin(twitchLiveMcbe) {
             nickname: event.userDisplayName,
             bits: event.bits,
         });
-        console.log("Follow",JSON.parse(message))
+        const JMes=JSON.parse(message)
+        console.log("Follow",JMes)
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/關注了主播`
+        //console.log(encodeURI(GURL))
+        sendBarkNotification(GURL)
+
         minecraft.sendScriptEvent('tntcoin:follow', message);
     });
     
@@ -87,14 +112,7 @@ export async function plugin(twitchLiveMcbe) {
 
         const JMes=JSON.parse(message)
         const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
-        //console.log(encodeURI(GURL))
-        axios.get(encodeURI(GURL))
-            .then(res => {
-                console.log(res.status);
-            })
-            .catch(err => {
-                console.error('錯誤:', err.message);
-            });
+        sendBarkNotification(GURL)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
     });
@@ -115,15 +133,9 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        axios.get(encodeURI(GURL))
-            .then(res => {
-                console.log(res.status);
-            })
-            .catch(err => {
-                console.error('錯誤:', err.message);
-            });
+        sendBarkNotification(GURL)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
@@ -145,15 +157,9 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        axios.get(encodeURI(GURL))
-            .then(res => {
-                console.log(res.status);
-            })
-            .catch(err => {
-                console.error('錯誤:', err.message);
-            });
+        sendBarkNotification(GURL)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
@@ -168,15 +174,9 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        axios.get(encodeURI(GURL))
-            .then(res => {
-                console.log(res.status);
-            })
-            .catch(err => {
-                console.error('錯誤:', err.message);
-            });
+        sendBarkNotification(GURL)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
@@ -196,15 +196,9 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
+        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        axios.get(encodeURI(GURL))
-            .then(res => {
-                console.log(res.status);
-            })
-            .catch(err => {
-                console.error('錯誤:', err.message);
-            });
+        sendBarkNotification(GURL)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:reward', message);
         
