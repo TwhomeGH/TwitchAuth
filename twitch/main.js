@@ -13,18 +13,43 @@ config(); // 讀取 .env
 const Bark=process.env.BARK_API
 
 // --- 封裝通知 function ---
-async function sendBarkNotification(comment) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function sendBarkNotification(title="Twitch",comment, icon) {
     // 判斷 Bark 是否可用
     if (!Bark || Bark.toLowerCase() === "none") {
         console.log("Bark 未設定，略過推送");
         return;
     }
+
     try {
-        const encoded = encodeURI(comment);
-        const res = await axios.get(encoded);
-        console.log("Bark 推送成功", res.status);
+        // 組成要送出的 JSON 內容
+        const payload = {
+            title: title,
+            body: comment,
+            icon: icon || undefined, // 沒傳就不放
+        };
+
+        // 傳送 POST 請求到 Bark
+        const res = await axios.post(Bark, payload, {
+            headers: { "Content-Type": "application/json" },
+        });
+
+        console.log("✅ Bark 推送成功", res.status);
     } catch (err) {
-        console.error("Bark 錯誤:", err.message);
+        console.error("❌ Bark 推送錯誤:", err.message);
     }
 }
 
@@ -64,6 +89,14 @@ export async function plugin(twitchLiveMcbe) {
         `scriptevent tntcoin:connected ${JSON.stringify(data)}`
     );
 
+    async function getUserIcon(id) {
+         const uss=await apiClient.users.getUserById(id)
+         console.log("icon",uss.profilePictureUrl)
+         return uss.profilePictureUrl
+    }
+    
+    
+
     // --- 4. 訂閱事件 ---
     // Cheer (Bits 打賞)
     listener.onChannelCheer(tuser,tuser, (event) => {
@@ -78,9 +111,9 @@ export async function plugin(twitchLiveMcbe) {
         });
         const JMes=JSON.parse(message)
         console.log("Cheer",JMes)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+        sendBarkNotification(JMes.nickname,JMes.comment)
         minecraft.sendScriptEvent('tntcoin:reward', message);
     });
 
@@ -90,19 +123,23 @@ export async function plugin(twitchLiveMcbe) {
         const message = JSON.stringify({
             uniqueId: event.userId,
             nickname: event.userDisplayName,
-            bits: event.bits,
+            comment:`${JMes.nickname} 關注了主播`
         });
         const JMes=JSON.parse(message)
         console.log("Follow",JMes)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/關注了主播`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+        
+        if(String(JMes.nickname).length <1){
+            JMes.nickname= event.userName
+        }
+        sendBarkNotification(JMes.nickname,"關注了主播",getUserIcon(event.userId))
 
         minecraft.sendScriptEvent('tntcoin:follow', message);
     });
     
     
-    listener.onChannelChatMessage(tuser,tuser, (event) => {
+    listener.onChannelChatMessage(tuser,tuser, async (event) => {
 
         const message = JSON.stringify({
             uniqueId: event.chatterId,
@@ -110,14 +147,16 @@ export async function plugin(twitchLiveMcbe) {
             comment: event.messageText
         });
 
+
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${JMes.nickname}/${JMes.comment}`
-        sendBarkNotification(GURL)
+        const icon=await getUserIcon(event.chatterId)
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        sendBarkNotification(JMes.nickname,JMes.comment,icon)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
     });
     
-    listener.onChannelGoalProgress(tuser,(event)=>{
+    listener.onChannelGoalProgress(tuser, async (event)=>{
         
         let Goal= {
             currentAmount:event.currentAmount,
@@ -129,19 +168,20 @@ export async function plugin(twitchLiveMcbe) {
         const message = JSON.stringify({
             uniqueId: event.id,
             nickname: event.type,
-            comment: `目標：${Goal.currentAmount}\/${Goal.target}\n${Goal.content}`
+            comment: `目標：${Goal.currentAmount}/${Goal.target}`
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+
+        sendBarkNotification(JMes.nickname,JMes.comment)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
     })
 
-    listener.onChannelRaidFrom(tuser,(event)=>{
+    listener.onChannelRaidFrom(tuser, async(event)=>{
         
         let Raid= {
             name:event.raidedBroadcasterDisplayName,
@@ -157,15 +197,16 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+         const icon=await getUserIcon(Raid.id)
+        sendBarkNotification(JMes.nickname,JMes.comment,icon)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
     })
 
-    listener.onChannelSubscription(tuser,(event)=>{
+    listener.onChannelSubscription(tuser,async (event)=>{
 
         const message = JSON.stringify({
             uniqueId: event.userId,
@@ -174,9 +215,10 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+         const icon=await getUserIcon(event.userId)
+        sendBarkNotification(JMes.nickname,JMes.comment,icon)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:chat', message);
         
@@ -185,7 +227,7 @@ export async function plugin(twitchLiveMcbe) {
     })
 
 
-    listener.onChannelRedemptionAddForReward(tuser,(event)=>{
+    listener.onChannelRedemptionAddForReward(tuser,async (event)=>{
 
         const message = JSON.stringify({
             uniqueId: event.userId,
@@ -196,9 +238,10 @@ export async function plugin(twitchLiveMcbe) {
         });
         
         const JMes=JSON.parse(message)
-        const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
+        //const GURL=`${Bark}/${encodeURIComponent(JMes.nickname)}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
-        sendBarkNotification(GURL)
+         const icon=await getUserIcon(event.userId)
+        sendBarkNotification(JMes.nickname,JMes.comment,icon)
         console.log("Message",JMes)
         minecraft.sendScriptEvent('tntcoin:reward', message);
         
