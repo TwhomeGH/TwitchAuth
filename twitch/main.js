@@ -118,7 +118,7 @@ export async function plugin(twitchLiveMcbe) {
     });
 
 
-    listener.onChannelFollow(tuser,tuser, (event) => {
+    listener.onChannelFollow(tuser,tuser, async (event) => {
         
         const message = JSON.stringify({
             uniqueId: event.userId,
