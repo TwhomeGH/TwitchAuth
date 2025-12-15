@@ -130,9 +130,7 @@ export async function plugin(twitchLiveMcbe) {
         //const GURL=`${Bark}/${encodeURIComponent(JMes.comment)}`
         //console.log(encodeURI(GURL))
         
-        if(String(JMes.nickname).length <1){
-            JMes.nickname= event.userName
-        }
+        
         sendBarkNotification(JMes.nickname,"關注了主播",getUserIcon(event.userId))
 
         minecraft.sendScriptEvent('tntcoin:follow', message);
